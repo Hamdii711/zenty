@@ -1,0 +1,244 @@
+"use client"
+
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
+import { Scissors, User, Mail, Lock, Eye, EyeOff, Store, AlertCircle, Loader2, CheckCircle } from "lucide-react"
+
+type Role = "CLIENT" | "BARBER"
+
+export default function RegisterPage() {
+  const router = useRouter()
+  const [form, setForm] = useState({ name: "", email: "", password: "", role: "CLIENT" as Role })
+  const [showPassword, setShowPassword] = useState(false)
+  const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    setError("")
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        setError(data.error || "Erreur lors de l'inscription")
+        return
+      }
+      router.push("/auth/login")
+    } catch {
+      setError("Erreur serveur, veuillez réessayer")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const roles: { value: Role; label: string; description: string; icon: React.ReactNode }[] = [
+    {
+      value: "CLIENT",
+      label: "Client",
+      description: "Je cherche un barbier et prends des RDV",
+      icon: <User className="w-6 h-6" />,
+    },
+    {
+      value: "BARBER",
+      label: "Professionnel",
+      description: "Je suis barbier et gère mon agenda",
+      icon: <Store className="w-6 h-6" />,
+    },
+  ]
+
+  return (
+    <div className="min-h-screen flex">
+      {/* Left panel */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-purple-700 via-purple-600 to-purple-800 flex-col items-center justify-center p-12 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-10 left-10 w-64 h-64 bg-white rounded-full blur-3xl" />
+          <div className="absolute bottom-10 right-10 w-80 h-80 bg-white rounded-full blur-3xl" />
+        </div>
+
+        <div className="relative z-10 max-w-sm text-center">
+          <div className="w-20 h-20 bg-white/20 rounded-3xl flex items-center justify-center mx-auto mb-6 backdrop-blur-sm">
+            <Scissors className="w-10 h-10 text-white" />
+          </div>
+          <h1 className="text-4xl font-extrabold text-white mb-3 tracking-tight">Zenty</h1>
+          <p className="text-purple-200 text-lg font-medium mb-10">
+            Rejoignez la communauté Zenty
+          </p>
+
+          <ul className="space-y-4 text-left">
+            {[
+              { icon: "🚀", text: "Inscription gratuite et rapide en 1 minute" },
+              { icon: "🔒", text: "Vos données sont sécurisées et protégées" },
+              { icon: "💬", text: "Support client disponible 7j/7" },
+            ].map(({ icon, text }) => (
+              <li key={text} className="flex items-start gap-3 text-purple-100">
+                <span className="text-xl">{icon}</span>
+                <span className="text-sm leading-relaxed">{text}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      {/* Right panel */}
+      <div className="flex-1 flex items-center justify-center px-6 py-12 bg-gray-50">
+        <div className="w-full max-w-md">
+          {/* Mobile logo */}
+          <div className="lg:hidden flex items-center justify-center gap-2 mb-8">
+            <div className="w-10 h-10 bg-purple-600 rounded-xl flex items-center justify-center">
+              <Scissors className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-2xl font-extrabold text-gray-900">Zenty</span>
+          </div>
+
+          <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8">
+            {/* Desktop logo */}
+            <div className="hidden lg:flex items-center gap-2 mb-6">
+              <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
+                <Scissors className="w-4 h-4 text-white" />
+              </div>
+              <span className="text-lg font-bold text-gray-900">Zenty</span>
+            </div>
+
+            <h2 className="text-2xl font-bold text-gray-900 mb-1">Créer un compte</h2>
+            <p className="text-gray-500 text-sm mb-7">Quelques secondes suffisent</p>
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Role selection */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Je souhaite...
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  {roles.map((r) => (
+                    <button
+                      key={r.value}
+                      type="button"
+                      onClick={() => setForm({ ...form, role: r.value })}
+                      className={`relative flex flex-col items-start gap-2 p-4 rounded-2xl border-2 text-left transition ${
+                        form.role === r.value
+                          ? "border-purple-500 bg-purple-50"
+                          : "border-gray-200 hover:border-purple-200 bg-white"
+                      }`}
+                    >
+                      {form.role === r.value && (
+                        <CheckCircle className="absolute top-3 right-3 w-4 h-4 text-purple-600" />
+                      )}
+                      <div className={`${form.role === r.value ? "text-purple-600" : "text-gray-400"}`}>
+                        {r.icon}
+                      </div>
+                      <div>
+                        <p className={`text-sm font-semibold ${form.role === r.value ? "text-purple-700" : "text-gray-700"}`}>
+                          {r.label}
+                        </p>
+                        <p className="text-xs text-gray-400 leading-snug mt-0.5">{r.description}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Name */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                  Nom complet
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-gray-400 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    placeholder="Jean Dupont"
+                    className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition bg-gray-50 focus:bg-white"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Email */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                  Adresse email
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-gray-400 pointer-events-none" />
+                  <input
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    placeholder="vous@email.com"
+                    className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition bg-gray-50 focus:bg-white"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Password */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                  Mot de passe
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-gray-400 pointer-events-none" />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={form.password}
+                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                    placeholder="••••••••"
+                    className="w-full pl-11 pr-12 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition bg-gray-50 focus:bg-white"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+                    aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                  >
+                    {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Error */}
+              {error && (
+                <div className="flex items-center gap-2.5 bg-red-50 border border-red-100 text-red-700 px-4 py-3 rounded-xl text-sm">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              {/* Submit */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-60 text-white py-3 rounded-xl font-semibold text-sm transition flex items-center justify-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Création en cours...
+                  </>
+                ) : (
+                  "Créer mon compte"
+                )}
+              </button>
+            </form>
+
+            <p className="text-center text-sm text-gray-500 mt-6">
+              Déjà un compte ?{" "}
+              <Link href="/auth/login" className="text-purple-600 hover:text-purple-800 font-semibold transition">
+                Se connecter
+              </Link>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
